@@ -1,8 +1,12 @@
 # Parcial-Arep-T1
 
-### Clone el proyecto así: https://github.com/franciscoMarquezBocanegra/Parcial-Arep-T
+### Clone el proyecto así: 
 
-### Haga un cd a Parcial-Arep-T
+ 	gi clone https://github.com/franciscoMarquezBocanegra/Parcial-Arep-T1
+
+### Haga un cd 
+
+	cd Parcial-Arep-T
 
 ###  Ejecute lo siguiene:
 
@@ -14,6 +18,9 @@
 Ahora corremos el servidor
 	
 
-
 	 mvn exec:java -"Dexec.mainClass"="com.mycompany.chat.HttpServer"
+
+Ingrese con su navegador
+
+	localhost:36000
 
