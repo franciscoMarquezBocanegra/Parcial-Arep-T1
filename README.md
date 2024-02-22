@@ -6,7 +6,7 @@
 
 ### Haga un cd 
 
-	cd Parcial-Arep-T
+	cd Parcial-Arep-T1
 
 ###  Ejecute lo siguiene:
 
