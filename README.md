@@ -1,9 +1,19 @@
 # Parcial-Arep-T1
 
-## Clone el proyecto así: https://github.com/franciscoMarquezBocanegra/Parcial-Arep-T
+### Clone el proyecto así: https://github.com/franciscoMarquezBocanegra/Parcial-Arep-T
 
-## Haga un cd a Parcial-Arep-T
+### Haga un cd a Parcial-Arep-T
 
-##  Ejecute: mnv clean install, mvn package install
+###  Ejecute lo siguiene:
 
-## Ejecute
+ comandos
+	
+	 mvn clean package install
+	 mvn clean install
+
+Ahora corremos el servidor
+	
+
+
+	 mvn exec:java -"Dexec.mainClass"="com.mycompany.chat.HttpServer"
+
