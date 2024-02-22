@@ -1,104 +1,235 @@
 package com.mycompany.chat;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.*;
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 
+/**
+ * Clase principal servidor HTTP
+ */
 public class HttpServer {
 
-    public static void main(String[] args) throws IOException {
+    public static Map<String, String> cache = new HashMap<String, String>();
+
+    public static void main(String[] args) {
+        try {
+            HttpServer.start();
+        } catch (IOException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
+                 IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Método principal para iniciar el servidor HTTP.
+     *
+     * @throws IOException Si ocurre un error al configurar o aceptar conexiones.
+     */
+    public static void start() throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+
         ServerSocket serverSocket = null;
         try {
-            serverSocket = new ServerSocket(36000);
+            serverSocket = new ServerSocket(35000);
         } catch (IOException e) {
             System.err.println("Could not listen on port: 35000.");
             System.exit(1);
         }
-
         Socket clientSocket = null;
-        try {
-            System.out.println("Listo para recibir ...");
-            clientSocket = serverSocket.accept();
-        } catch (IOException e) {
-            System.err.println("Accept failed.");
-            System.exit(1);
-        }
-        PrintWriter out = new PrintWriter(
-                clientSocket.getOutputStream(), true);
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(clientSocket.getInputStream()));
-        String inputLine, outputLine, outputLine2;
-        while ((inputLine = in.readLine()) != null) {
-            System.out.println("Recibí: " + inputLine);
-            if (!in.ready()) {
-                break;
+        while (!serverSocket.isClosed()) {
+            try {
+                System.out.println("Operando Reflective ChatGPT...");
+                clientSocket = serverSocket.accept();
+            } catch (IOException e) {
+                System.err.println("Accept failed.");
+                System.exit(1);
             }
+
+            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(
+                            clientSocket.getInputStream()));
+            String inputLine, outputLine;
+            boolean firstLine = true;
+            String uriString = "";
+            while ((inputLine = in.readLine()) != null) {
+                System.out.println("Received: " + inputLine);
+                if (firstLine) {
+                    firstLine = false;
+                    uriString = inputLine.split(" ")[1];
+
+                }
+                if (!in.ready()) {
+                    break;
+                }
+            }
+            System.out.println("URI: " + uriString);
+            String responseBody = "";
+            if (uriString != null && uriString.equals("/")) {
+                outputLine = getForm();
+            } else {
+                if (uriString.split("\\?")[0].equals("/consulta")) {
+                    String line = uriString.split("=")[1];
+                    String method = line.split("\\(")[0];
+                    if(method.equals("Class")){
+                        responseBody = classMethod(line);
+                    }else if(method.equals("invoke")){
+                        responseBody = invokeMethod(line);
+                    }
+                    else if(method.equals("unaryInvoke")){
+                        responseBody = unaryInvokeMethod(line);
+                    }else{
+                        responseBody = "Método invalido";
+                    }
+                    outputLine = getLine(responseBody);
+                } else {
+                    outputLine = getIndexResponse();
+                }
+            }
+            out.println(outputLine);
+            out.close();
+            in.close();
         }
-        outputLine
-                = "<!DOCTYPE html>"
-                + "<html>"
-                + "<head>"
-                + "<meta charset=\"UTF-8\">"
-                + "<title>Title of the document</title>\n"
-                + "</head>"
-                + "<body>"
-                + "<h1>Mi propio mensaje</h1>"
-                + "</body>"
-                + "</html>";
-        out.println(outputLine);
-        out.close();
-        in.close();
         clientSocket.close();
         serverSocket.close();
-
-        outputLine2 = "<!DOCTYPE html>\n"
-                + "<html>\n"
-                + "    <head>\n"
-                + "        <title>Form Example</title>\n"
-                + "        <meta charset=\"UTF-8\">\n"
-                + "        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-                + "    </head>\n"
-                + "    <body>\n"
-                + "        <h1>Form with GET</h1>\n"
-                + "        <form action=\"/hello\">\n"
-                + "            <label for=\"name\">Name:</label><br>\n"
-                + "            <input type=\"text\" id=\"name\" name=\"name\" value=\"John\"><br><br>\n"
-                + "            <input type=\"button\" value=\"Submit\" onclick=\"loadGetMsg()\">\n"
-                + "        </form> \n"
-                + "        <div id=\"getrespmsg\"></div>\n"
-                + "\n"
-                + "        <script>\n"
-                + "            function loadGetMsg() {\n"
-                + "                let nameVar = document.getElementById(\"name\").value;\n"
-                + "                const xhttp = new XMLHttpRequest();\n"
-                + "                xhttp.onload = function() {\n"
-                + "                    document.getElementById(\"getrespmsg\").innerHTML =\n"
-                + "                    this.responseText;\n"
-                + "                }\n"
-                + "                xhttp.open(\"GET\", \"/hello?name=\"+nameVar);\n"
-                + "                xhttp.send();\n"
-                + "            }\n"
-                + "        </script>\n"
-                + "\n"
-                + "        <h1>Form with POST</h1>\n"
-                + "        <form action=\"/hellopost\">\n"
-                + "            <label for=\"postname\">Name:</label><br>\n"
-                + "            <input type=\"text\" id=\"postname\" name=\"name\" value=\"John\"><br><br>\n"
-                + "            <input type=\"button\" value=\"Submit\" onclick=\"loadPostMsg(postname)\">\n"
-                + "        </form>\n"
-                + "        \n"
-                + "        <div id=\"postrespmsg\"></div>\n"
-                + "        \n"
-                + "        <script>\n"
-                + "            function loadPostMsg(name){\n"
-                + "                let url = \"/hellopost?name=\" + name.value;\n"
-                + "\n"
-                + "                fetch (url, {method: 'POST'})\n"
-                + "                    .then(x => x.text())\n"
-                + "                    .then(y => document.getElementById(\"postrespmsg\").innerHTML = y);\n"
-                + "            }\n"
-                + "        </script>\n"
-                + "    </body>\n"
-                + "</html>";
     }
 
+    /**
+     * Retorna una página HTML.
+     *
+     * @return Respuesta HTTP con la página de inicio.
+     */
+    public static String getIndexResponse() {
+        String response = "HTTP/1.1 200 OK"
+                + "Content-Type: text/html\r\n"
+                + "\r\n"
+                + "<!DOCTYPE html>\n" +
+                "<html>\n" +
+                "    <head>\n" +
+                "        <title>Reflective ChatGPT</title>\n" +
+                "        <meta charset=\"UTF-8\">\n" +
+                "        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" +
+                "    </head>\n" +
+                "    <body>\n" +
+                "        <h1>Reflective ChatGPT</h1>\n" +
+                "    </body>\n" +
+                "</html>";
+        return response;
+    }
+
+
+    public static String getForm() {
+        return "HTTP/1.1 200 OK \r\n"
+                + "Content-Type: text/html \r\n"
+                + "\r\n"
+                + "<!DOCTYPE html>\n" +
+                "<html>\n" +
+                "    <head>\n" +
+                "        <title>Reflective ChatGPT</title>\n" +
+                "        <meta charset=\"UTF-8\">\n" +
+                "        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" +
+                "    </head>\n" +
+                "    <body>\n" +
+                "        <h1>Reflective ChatGPT</h1>\n" +
+                "        <form action=\"/hello\">\n" +
+                "            <label for=\"name\">Ingrese Método:</label><br>\n" +
+                "            <input type=\"text\" id=\"name\" name=\"name\" value=\"Class(java.lang.String)\"><br><br>\n" +
+                "            <input type=\"button\" value=\"Enviar\" onclick=\"loadGetMsg()\">\n" +
+                "        </form> \n" +
+                "        <div id=\"getrespmsg\"></div>\n" +
+                "\n" +
+                "        <script>\n" +
+                "            function loadGetMsg() {\n" +
+                "                let nameVar = document.getElementById(\"name\").value;\n" +
+                "                const xhttp = new XMLHttpRequest();\n" +
+                "                xhttp.onload = function() {\n" +
+                "                    document.getElementById(\"getrespmsg\").innerHTML =\n" +
+                "                    this.responseText;\n" +
+                "                }\n" +
+                "                xhttp.open(\"GET\", \"/consulta?comando=\"+nameVar);\n" +
+                "                xhttp.send();\n" +
+                "            }\n" +
+                "            document.getElementById(\"name\").addEventListener(\"keydown\", function(event) {\n" +
+                "                if (event.key === \"Enter\") {\n" +
+                "                    event.preventDefault();\n" +
+                "                    loadGetMsg();\n" +
+                "                }\n" +
+                "            });\n" +
+                "        </script>\n" +
+                "\n" +
+                "    </body>\n" +
+                "</html>";
+    }
+
+
+    private static String classMethod(String line) throws ClassNotFoundException {
+        StringBuilder response = new StringBuilder();
+        Class c = Class.forName(line.split("\\(")[1].replaceAll("\\)",""));
+        for (Method m:
+                c.getMethods()) {
+            response.append(m.toString()).append("\r\n").append("\n");
+        }
+        return response.toString();
+    }
+
+    private static String invokeMethod(String line) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Class c = Class.forName(line.split("\\(")[1].split(",")[0]);
+        return c.getMethod(line.split("\\(")[1].split(",")[1].replace("%20","").replaceAll("\\)","")).invoke(c.getClass()).toString();
+    }
+
+    private static String unaryInvokeMethod(String line) throws NoSuchMethodException, ClassNotFoundException, InvocationTargetException, IllegalAccessException {
+        line = line.replaceAll("%20", "").replaceAll("%22", "");
+        String[] parts = line.split(",");
+        String className = parts[0].split("\\(")[1];
+        String methodName = parts[1];
+        String paramType = parts[2].trim();
+        String paramValue = parts[3].replace("%20", "").replaceAll("\\)", "").trim();
+
+        Class<?> clazz = Class.forName(className);
+        Method method = clazz.getMethod(methodName, getTypeClass(paramType));
+
+        Object result;
+        if (paramType.equals("int")) {
+            result = method.invoke(null, Integer.parseInt(paramValue));
+        } else if (paramType.equals("double")) {
+            result = method.invoke(null, Double.parseDouble(paramValue));
+        } else if (paramType.equals("String")) {
+            result = method.invoke(null, paramValue);
+        } else {
+            return "Tipo de parámetro no admitido";
+        }
+
+        return result.toString();
+    }
+
+    private static Class<?> getTypeClass(String type) {
+        switch (type) {
+            case "int":
+                return int.class;
+            case "double":
+                return double.class;
+            case "String":
+                return String.class;
+            default:
+                throw new IllegalArgumentException("Tipo de parámetro no admitido: " + type);
+        }
+    }
+
+
+    public static String getLine(String responseBody) {
+        return "HTTP/1.1 200 OK \r\n"
+                + "Content-Type: text/html \r\n"
+                + "\r\n"
+                + "\n"
+                + responseBody;
+    }
+
+    public static String getJSON(String responseJson) {
+        return "HTTP/1.1 200 OK \r\n"
+                + "Content-Type: application/json \r\n"
+                + "\r\n"
+                + responseJson;
+    }
 }
